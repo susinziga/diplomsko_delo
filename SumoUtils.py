@@ -32,7 +32,7 @@ class SumoUtils:
    
     def generate_sumo(self):
 
-        nrOfCars = 1500
+        nrOfCars = 800
         random.seed(42)  # make tests reproducible
         N = 4500  # number of time steps
         # demand per second from different directions
@@ -82,8 +82,8 @@ class SumoUtils:
                         print('    <vehicle id="N_S_%i" type="standard_car" route="N_S" depart="%s" departLane="random" departSpeed="10" />' % (car_counter, step), file=routes)
                     else:
                         print('    <vehicle id="S_N_%i" type="standard_car" route="S_N" depart="%s" departLane="random" departSpeed="10" />' % (car_counter, step), file=routes)
-                else:  # car that turn -25% of the time the car turns
-                    route_turn = np.random.randint(1, 9)  # choose random source source & destination
+                else:  
+                    route_turn = np.random.randint(1, 9)  
                     if route_turn == 1:
                         print('    <vehicle id="W_N_%i" type="standard_car" route="W_N" depart="%s" departLane="random" departSpeed="10" />' % (car_counter, step), file=routes)
                     elif route_turn == 2:
@@ -120,6 +120,11 @@ class SumoUtils:
         positionMatrix = []
         velocityMatrix = []
 
+        positionMatrix1 = []
+        positionMatrix2 = []
+        positionMatrix3 = []
+        positionMatrix4 = []
+
         cellLength = 7
         offset = 11
         speedLimit = 14
@@ -130,6 +135,21 @@ class SumoUtils:
         vehicles_road3 = traci.edge.getLastStepVehicleIDs('S2TL')   #SPODNJA
         vehicles_road4 = traci.edge.getLastStepVehicleIDs('W2TL')   #LEVA
         #nastavimo 0 v vsa polja
+
+        for i in range(4):
+            positionMatrix1.append([])
+            positionMatrix2.append([])
+            positionMatrix3.append([])
+            positionMatrix4.append([])
+            
+            for j in range(16):
+                positionMatrix1[i].append(0)
+                positionMatrix2[i].append(0)
+                positionMatrix3[i].append(0)
+                positionMatrix4[i].append(0)
+                
+
+
         for i in range(16):
             positionMatrix.append([])
             velocityMatrix.append([])
@@ -142,6 +162,7 @@ class SumoUtils:
             ind = int(
                 abs((junctionPosition - traci.vehicle.getPosition(v)[0] - offset)) / cellLength)
             if(ind < 16):
+                positionMatrix1[traci.vehicle.getLaneIndex(v)][ind]
                 positionMatrix[traci.vehicle.getLaneIndex(v)][ind -4] = 1
                 velocityMatrix[traci.vehicle.getLaneIndex(v)][ind] = traci.vehicle.getSpeed(v) / speedLimit
 
@@ -149,6 +170,7 @@ class SumoUtils:
             ind = int(
                 abs((junctionPosition - traci.vehicle.getPosition(v)[1] + offset)) / cellLength)
             if(ind < 16):
+                positionMatrix2[traci.vehicle.getLaneIndex(v)][ind]
                 positionMatrix[4 + traci.vehicle.getLaneIndex(v)][ind] = 1
                 velocityMatrix[4 + traci.vehicle.getLaneIndex(v)][ind] = traci.vehicle.getSpeed(v) / speedLimit
 
@@ -157,6 +179,7 @@ class SumoUtils:
             ind = int(
                 abs((junctionPosition - traci.vehicle.getPosition(v)[1] - offset)) / cellLength)
             if(ind < 16):
+                positionMatrix3[traci.vehicle.getLaneIndex(v)][ind]
                 positionMatrix[8 + traci.vehicle.getLaneIndex(v)][ind] = 1
                 velocityMatrix[8 + traci.vehicle.getLaneIndex(v)][ind] = traci.vehicle.getSpeed(v) / speedLimit
 
@@ -164,7 +187,7 @@ class SumoUtils:
             ind = int(
                 abs((junctionPosition - traci.vehicle.getPosition(v)[0] + offset)) / cellLength)-4
             if(ind < 16):
-                
+                positionMatrix4[traci.vehicle.getLaneIndex(v)][ind]
                 positionMatrix[12 + traci.vehicle.getLaneIndex(v)][ind] = 1
                 velocityMatrix[12 + traci.vehicle.getLaneIndex(v)][ind] = traci.vehicle.getSpeed(v) / speedLimit
 
@@ -175,7 +198,7 @@ class SumoUtils:
             light = [0, 1]
 
         position = np.array(positionMatrix)
-        position = position.reshape(1, 16, 16, 1)
+        position = position.reshape(4,4,16)
 
         velocity = np.array(velocityMatrix)
         velocity = velocity.reshape(1, 16, 16, 1)
@@ -183,4 +206,17 @@ class SumoUtils:
         lgts = np.array(light)
         lgts = lgts.reshape(1, 2, 1)
 
-        return [position, velocity, lgts]
+
+        position1 = np.array(positionMatrix1)
+        position1 = position1.reshape(1,4,16)
+
+        position2 = np.array(positionMatrix2)
+        position2 = position2.reshape(1,4,16)
+
+        position3 = np.array(positionMatrix3)
+        position3 = position3.reshape(1,4,16)
+
+        position4 = np.array(positionMatrix4)
+        position4 = position4.reshape(1,4,16)
+
+        return [position1,position2,position3,position4]

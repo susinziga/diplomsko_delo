@@ -8,9 +8,14 @@ class Visualization:
 
 
     def save_data_and_plot(self, data, filename, xlabel, ylabel):
-        """
-        Produce a plot of performance of the agent over the session and save the relative data to txt
-        """
+     
+
+        with open(os.path.join(self._path, 'plot_'+filename + '_data.txt'), "w") as file:
+            for value in data:
+                    file.write("%s\n" % value)
+
+
+
         min_val = min(data)
         max_val = max(data)
 
@@ -26,7 +31,5 @@ class Visualization:
         fig.savefig('./plot_'+filename+'.png', dpi=self._dpi)
         plt.close("all")
 
-        with open(os.path.join(self._path, 'plot_'+filename + '_data.txt'), "w") as file:
-            for value in data:
-                    file.write("%s\n" % value)
+        
     

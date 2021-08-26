@@ -27,7 +27,7 @@ from keras.models import Model
 
 def _get_queue_length():
         """
-        Retrieve the number of cars with speed = 0 in every incoming lane
+        stevilo avtomobilov ki stojijo za semaforjem na posameznih cestah
         """
         halt_N = traci.edge.getLastStepHaltingNumber("N2TL")
         halt_S = traci.edge.getLastStepHaltingNumber("S2TL")
@@ -39,6 +39,7 @@ def _get_queue_length():
         return queue_length
 
 def getWaitTime(wait_times):
+        reward1 = 0
         car_list = traci.vehicle.getIDList()
         total_time = 0
         for car_id in car_list:
@@ -49,16 +50,51 @@ def getWaitTime(wait_times):
                 wait_times[car_id] = wait_time
             else:
                 if car_id in wait_times: # a car that was tracked has cleared the intersection
+                    reward1 += wait_times[car_id]
                     del wait_times[car_id]
-
+        
         total_time = sum(wait_times.values())
-        return total_time
+
+       
+        return reward1 - total_time
 
 
 def _simulate( step , steps_todo, max_steps):
-        """
-        Execute steps in sumo while gathering statistics
-        """
+       
+        if (step + steps_todo) >= max_steps:  # do not do more steps than the maximum allowed number of steps
+            steps_todo = steps - step
+
+        sum_queue_length = 0
+        waiting_time = 0
+
+        while steps_todo > 0:
+            traci.simulationStep()  # simulate 1 step in sumo
+            step += 1 # update the step counter
+            steps_todo -= 1
+            queue_length = _get_queue_length()
+            
+            sum_queue_length += queue_length
+            waiting_time += queue_length # 1 step while wating in queue means 1 second waited, for each car, therefore queue_lenght == waited_seconds
+       
+        return step,sum_queue_length,waiting_time
+
+
+''' 
+Ta funkcija se trenutno ne uporablja
+'''
+def _simulate_0(step , steps_todo, max_steps):
+        traci.trafficlight.setPhase('TL', 5)
+        steps, queue_length_current, waiting_time_current = _simulate(steps , yellow_duration, max_steps)
+    
+        traci.trafficlight.setPhase('TL', 6)
+        steps, queue_length_current, waiting_time_current = _simulate(steps , green_duration, max_steps)
+
+        traci.trafficlight.setPhase('TL', 7)
+        steps, queue_length_current, waiting_time_current = _simulate(steps , yellow_duration, max_steps)
+
+        traci.trafficlight.setPhase ('TL', 0)
+        steps, queue_length_current, waiting_time_current = _simulate(steps , green_duration, max_steps)
+
         if (step + steps_todo) >= max_steps:  # do not do more steps than the maximum allowed number of steps
             steps_todo = steps - step
 
@@ -82,7 +118,7 @@ if __name__ == '__main__':
     sumoInt = SumoUtils()
     options = sumoInt.get_options()
     sumoInt.generate_sumo()
-    episodes  = 150
+    episodes  = 200
     agent = agentModel()
     agent.episodes = episodes
     path="P:\FERI\diploma\project\Graphs"
@@ -92,7 +128,7 @@ if __name__ == '__main__':
     )
 
     try:
-        agent.load('model/reinf_traf_control_79.h5')
+        agent.load('model/reinf_traf_control_79a.h5')
         print("model loaded")
     except:
         print('No model')
@@ -128,8 +164,8 @@ if __name__ == '__main__':
     old_wait = 0
     sum_neg_reward = 0
 
-    yellow_duration = 12
-    green_duration = 30
+    yellow_duration = 6
+    green_duration = 25
 
     for e in range(episodes):
         print("--------------------")
@@ -165,8 +201,10 @@ if __name__ == '__main__':
 
             state = sumoInt.getState()
 
-            waiting_time_current = getWaitTime(_waiting_times)
-            reward = old_wait - waiting_time_current
+            #waiting_time_current = getWaitTime(_waiting_times)
+            #reward = old_wait - waiting_time_current
+
+            reward = getWaitTime(_waiting_times)
 
             if(steps > 0):
                 agent.remember(old_state, old_action, reward, state, False)
@@ -175,11 +213,7 @@ if __name__ == '__main__':
             action = agent.act(state)
 
             
-          
-            
 
-
-            
             #print(waiting_time_current)
 
             if(action == old_action):
@@ -235,12 +269,6 @@ if __name__ == '__main__':
             
            
 
-            
-           
-          
-
-            
-
             old_wait = waiting_time_current
             old_state = state
             old_action = action
@@ -265,9 +293,13 @@ if __name__ == '__main__':
         start_time = timeit.default_timer()
         if(len(agent.memory) > batch_size):
             agent.lrn(batch_size)
+        else:
+            agent.lrn(len(agent.memory))
         
-        if e % 20 == 0 :
-            batch_size = batch_size - 5
+        if e!=0 and e % 50 == 0 :
+            batch_size = (int)(batch_size * 0.95)
+
+
         training_time = round(timeit.default_timer() - start_time, 1)
         agent.setEpsilon()
 
