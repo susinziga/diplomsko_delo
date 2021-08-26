@@ -49,7 +49,7 @@ def getWaitTime(wait_times):
             if road_id in incoming_roads:
                 wait_times[car_id] = wait_time
             else:
-                if car_id in wait_times: # a car that was tracked has cleared the intersection
+                if car_id in wait_times: 
                     reward1 += wait_times[car_id]
                     del wait_times[car_id]
         
@@ -61,20 +61,20 @@ def getWaitTime(wait_times):
 
 def _simulate( step , steps_todo, max_steps):
        
-        if (step + steps_todo) >= max_steps:  # do not do more steps than the maximum allowed number of steps
+        if (step + steps_todo) >= max_steps: 
             steps_todo = steps - step
 
         sum_queue_length = 0
         waiting_time = 0
 
         while steps_todo > 0:
-            traci.simulationStep()  # simulate 1 step in sumo
-            step += 1 # update the step counter
+            traci.simulationStep()  
+            step += 1 
             steps_todo -= 1
             queue_length = _get_queue_length()
             
             sum_queue_length += queue_length
-            waiting_time += queue_length # 1 step while wating in queue means 1 second waited, for each car, therefore queue_lenght == waited_seconds
+            waiting_time += queue_length 
        
         return step,sum_queue_length,waiting_time
 
@@ -95,20 +95,20 @@ def _simulate_0(step , steps_todo, max_steps):
         traci.trafficlight.setPhase ('TL', 0)
         steps, queue_length_current, waiting_time_current = _simulate(steps , green_duration, max_steps)
 
-        if (step + steps_todo) >= max_steps:  # do not do more steps than the maximum allowed number of steps
+        if (step + steps_todo) >= max_steps: 
             steps_todo = steps - step
 
         sum_queue_length = 0
         waiting_time = 0
 
         while steps_todo > 0:
-            traci.simulationStep()  # simulate 1 step in sumo
-            step += 1 # update the step counter
+            traci.simulationStep() 
+            step += 1 
             steps_todo -= 1
             queue_length = _get_queue_length()
             
             sum_queue_length += queue_length
-            waiting_time += queue_length # 1 step while wating in queue means 1 second waited, for each car, therefore queue_lenght == waited_seconds
+            waiting_time += queue_length
        
         return step,sum_queue_length,waiting_time
 
