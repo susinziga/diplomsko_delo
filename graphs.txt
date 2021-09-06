@@ -1,1 +1,16 @@
 1.	256 inputs	0.95 gamma	0.0003 lr
+2.	256 inputs	0.995 gamma	0.003 lr
+
+
+lights  6/25
+4 actions
+4.	128 inputs	0.75 gamma	0.001 lr
+5.	128 inputs	0.7 gamma	0.001 lr
+6.	128 inputs	0.8 gamma	0.0003 lr
+
+
+lights 3/6
+7.	128 inputs	0.85 gamma	0.0003 lr
+
+lights  4/10
+8.	128 inputs	0.85 gamma	0.0003lr
